@@ -42,6 +42,7 @@ class gestion_tir:
         if self.joueur == "humain":                
             #dessiner la case du tir
             self.tir = self.zone.create_rectangle(0, 0, CASE, CASE, fill="yellow")
+    
        
     def deplacer(self, event):
         print(f"deplacer")#à supprimer
@@ -66,7 +67,6 @@ class gestion_tir:
         self.dessiner()
     
     def dessiner(self):
-        print(f"dessiner")#à supprimer
         if not self.tir:
             return
         i, j = self.pos_tir

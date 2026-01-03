@@ -37,42 +37,59 @@ def action_bot():
 
 #vérifie la présence d'un bateau sur la case du tir
 def verifier(event=None):
-    terrain_joueur.zone.delete(terrain_joueur.tir)
-    '''if self.joueur == "humain":
-        color = "blue"
-    else:
-        color = "green"'''
-    terrain_joueur.zone.create_rectangle(
-        terrain_joueur.pos_tir[0] * CASE, 
-        terrain_joueur.pos_tir[1] * CASE, 
-        terrain_joueur.pos_tir[0] * CASE + CASE, 
-        terrain_joueur.pos_tir[1] * CASE + CASE, 
-        fill="blue")
+    in_water = True
+    for elem in terrain_joueur.positions:
+        if elem[2] == 'H':
+            # bateau en postion horizontale
+            if elem[1] == terrain_joueur.pos_tir[1]:
+                # tir sur la même ligne que le bateau
+                if (terrain_joueur.pos_tir[0] >= elem[0]) and (terrain_joueur.pos_tir[0] < elem[0] + elem[3]):
+                    in_water = False
+        else:
+            # bateau en postion verticale
+            if elem[0] == terrain_joueur.pos_tir[0]:
+                # tir sur la même colonne que le bateau
+                if (terrain_joueur.pos_tir[1] >= elem[1]) and (terrain_joueur.pos_tir[1] < elem[1] + elem[3]):
+                    in_water = False
+        if in_water:
+            couleur = "white"
+            Label(terrain_joueur.fen, text="Plouf", bg="grey").place(x=450, y=350)
+        else:
+            couleur = "red"
+            Label(terrain_joueur.fen, text="Touché", bg="red").place(x=450, y=350)
+        terrain_joueur.zone.create_rectangle(
+            terrain_joueur.pos_tir[0] * CASE, 
+            terrain_joueur.pos_tir[1] * CASE, 
+            terrain_joueur.pos_tir[0] * CASE + CASE, 
+            terrain_joueur.pos_tir[1] * CASE + CASE, 
+            fill=couleur)
     terrain_joueur.pos_tir = [0,0]
-    #else:
-    #    self.zone.create_rectangle(self.pos_tir[0], self.pos_tir[1], CASE, CASE, fill="green")
-    '''if self.pos_tir == self.pos_bateau:
-            tir = self.zone.create_rectangle(self.pos_tir[i], self.pos_tir[j], CASE, CASE, fill="red")
-    else:
-            tir = self.zone.create_rectangle(self.pos_tir[i], self.pos_tir[j], CASE, CASE, fill="white") '''
     terrain_adversaire.tour_suivant()
+
 
 terrain_adversaire = gestion_tir(accueil, tir_effectue)
 terrain_joueur = Jeu(accueil)
 
+
 def commencer():
     bouton1.destroy() 
     generer_partie()
+    placement_bateau_bot()
 
 def generer_partie():
     terrain_adversaire.plateau(accueil)
     terrain_joueur.plateau(accueil)
 
-
-
 bouton1 = Button(accueil, text="Commencer", command=lambda:commencer())
 bouton1.place(x=650,y=450)
 Button(accueil, text="Quitter", command=accueil.quit).place(x=665,y=100)
+
+def placement_bateau_bot():
+    n = 2
+    for i in range(4):
+        n +=1
+        for k in range (n):
+            terrain_adversaire.rect = terrain_adversaire.zone.create_rectangle(k*CASE, 0, (k+1)*CASE, CASE, fill="gray")
 
 
 
