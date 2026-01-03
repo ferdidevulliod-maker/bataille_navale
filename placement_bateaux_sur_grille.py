@@ -10,13 +10,18 @@ class Jeu:
         self.fen.title("Bataille navale - placement")
         self.fen.geometry("900x500")
 
-        # creer le rectangle et le place en haut a gauche de la grille 
+        
+        # creer le rectangle et le place en haut agauche de la grille 
         self.parts = []          
         self.longueur = 0        
         self.orient = "H"        
-        self.pos = [0, 0]       
-
+        self.pos = [0, 0]    
+        # bateaux validés (liste de dicts et positions)
+        self.bateaux_valides = []
+        # positions (i,j,orient,longueur)
+        self.positions = []
         # raccourcis clavier pour deplacer le bateau
+        
         fen.bind("<Up>", self.deplacer)
         fen.bind("<Down>", self.deplacer)
         fen.bind("<Left>", self.deplacer)
@@ -37,6 +42,8 @@ class Jeu:
         Button(fen, text="Bateau 3", command=lambda: self.nouveau_bateau(3)).place(x=450, y=460)
         Button(fen, text="Bateau 4", command=lambda: self.nouveau_bateau(4)).place(x=450, y=500)
         Button(fen, text="Bateau 5", command=lambda: self.nouveau_bateau(5)).place(x=450, y=540)
+        # bouton Validez
+        Button(fen, text="Validez", command=self.validez_placement, bg="lightgreen").place(x=450, y=200)
     # petite aide
         Label(fen, text="Flèches = déplacer   R = tourner").place(x=20, y=350)
     #nom plateau
@@ -125,7 +132,78 @@ class Jeu:
         self.dessiner()
 
 
+    def _chevauchement(self, grille, i, j, orient, longueur):
+        # retourne True si chevauchement ou hors grille
+        for k in range(longueur):
+            ii = i + k if orient == "H" else i
+            jj = j if orient == "H" else j + k
+            if not (0 <= ii < TAILLE_GRILLE and 0 <= jj < TAILLE_GRILLE):
+                return True
+            if grille[jj][ii] == 1:
+                return True
+        return False
+
+    def validez_placement(self):
+        # vérifie qu'il y a un bateau en cours
+        if not self.parts or self.longueur == 0:
+            Label(self.fen, text="Aucun bateau à valider.", bg="orange").place(x=450, y=280)
+            return
+
+        i, j = self.pos
+        orient = self.orient
+        longueur = self.longueur
+
+        # construire grille locale à partir des bateaux déjà validés
+        grille_locale = [[0 for _ in range(TAILLE_GRILLE)] for _ in range(TAILLE_GRILLE)]
+        for b in self.bateaux_valides:
+            bi, bj = b['pos']
+            bor = b['orient']
+            bl = b['longueur']
+            for k in range(bl):
+                ii = bi + k if bor == "H" else bi
+                jj = bj if bor == "H" else bj + k
+                if 0 <= ii < TAILLE_GRILLE and 0 <= jj < TAILLE_GRILLE:
+                    grille_locale[jj][ii] = 1
+
+        # vérifier chevauchement / bordure
+        if self._chevauchement(grille_locale, i, j, orient, longueur):
+            Label(self.fen, text="Chevauchement ou hors grille !", bg="red", fg="white").place(x=450, y=280)
+            return
+
+        # colorer définitivement les rectangles du bateau validé et stocker
+        for idx, rect_id in enumerate(self.parts):
+            # recolorer en foncé pour indiquer validé
+            self.zone.itemconfig(rect_id, fill="darkgray")
+        bateau = {
+            'pos': [i, j],
+            'orient': orient,
+            'longueur': longueur,
+            'parts': self.parts[:]  # ids des rectangles visibles
+        }
+        self.bateaux_valides.append(bateau)
+        # stocker position simple (i,j,orient,longueur)
+        self.positions.append((i, j, orient, longueur))
+
+        # mettre à jour grille_locale avec ce bateau
+        for k in range(longueur):
+            ii = i + k if orient == "H" else i
+            jj = j if orient == "H" else j + k
+            grille_locale[jj][ii] = 1
+
+        # feedback
+        Label(self.fen, text="Bateau validé.", bg="lightgreen").place(x=450, y=280)
+
+        # réinitialiser l'état du bateau en cours (ne supprime pas les rectangles validés)
+        self.parts = []
+        self.longueur = 0
+        self.orient = "H"
+        self.pos = [0, 0]
+
+
 if __name__ == "__main__":
     root = Tk()
     Jeu(root)
     root.mainloop()
+
+
+
