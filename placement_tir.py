@@ -14,13 +14,16 @@ class gestion_tir:
         self.tir = None
         self.joueur = "humain" #premier joueur
         self.tir_effectue = tir_effectue
+        self.grille_occupee = None
          
-         # raccourcis clavier pour deplacer le tir
-        plateau_adversaire.bind("<Up>", self.deplacer)
-        plateau_adversaire.bind("<Down>", self.deplacer)
-        plateau_adversaire.bind("<Left>", self.deplacer)
-        plateau_adversaire.bind("<Right>", self.deplacer)
-        plateau_adversaire.bind("<Return>", self.tir_effectue)
+    def bouger_tir(self):   # raccourcis clavier pour deplacer le tir
+        self.plateau_adversaire.bind("<Up>", self.deplacer)
+        self.plateau_adversaire.bind("<Down>", self.deplacer)
+        self.plateau_adversaire.bind("<Left>", self.deplacer)
+        self.plateau_adversaire.bind("<Right>", self.deplacer)
+        self.plateau_adversaire.bind("<Return>", self.tir_effectue)
+        # bouton pour tirer sur une case de l'adversaire
+        Button(self.plateau_adversaire, text="Attaquer", command=lambda:self.creation_tir()).place(x=1230, y=400)
 
     def plateau(self,plateau_adversaire):
     #dessin du plateau de jeu 
@@ -30,18 +33,15 @@ class gestion_tir:
         for x in range(TAILLE_GRILLE):
             for y in range(TAILLE_GRILLE):
                 self.zone.create_rectangle(x*CASE, y*CASE, (x+1)*CASE, (y+1)*CASE, outline="black")
-    # bouton pour tirer sur une case de l'adversaire
-        Button(plateau_adversaire, text="Attaquer", command=lambda:self.creation_tir()).place(x=1230, y=400)
     # petite aide
         Label(plateau_adversaire, text="Flèches = déplacer viseur , enter = tirer ").place(x=800, y=350)
     #nom plateau
         Label(plateau_adversaire, text="Plateau ennemi").place(x=950, y=820)
 
-    def creation_tir(self):
-        print(f"creation_tir pour joueur {self.joueur}, tir: {self.tir}")#à supprimer
-        if self.joueur == "humain":                
+    def creation_tir(self):                
             #dessiner la case du tir
             self.tir = self.zone.create_rectangle(0, 0, CASE, CASE, fill="yellow")
+            #self.pos_tir = [x1/CASE, y1/CASE]
     
        
     def deplacer(self, event):

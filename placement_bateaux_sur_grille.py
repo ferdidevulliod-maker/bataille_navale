@@ -5,7 +5,7 @@ CASE = 50
 TAILLE_GRILLE = 8
 
 class Jeu:
-    def __init__(self, fen):
+    def __init__(self, fen, notif_bateaux_valides):
         self.fen = fen
         self.fen.title("Bataille navale - placement")
         self.fen.geometry("900x500")
@@ -18,7 +18,11 @@ class Jeu:
         # bateaux validés (liste de dicts et positions)
         self.bateaux_valides = []
        # positions (i,j,orient,longueur)
-        self.positions = []      
+        self.positions = []  
+        # notifier quand tous les bateaux sont validés
+        self.notif_bateaux_valides = notif_bateaux_valides 
+        # tir_du_bot
+        self.pos_tir = [0, 0]
 
         # raccourcis clavier pour deplacer le bateau
         fen.bind("<Up>", self.deplacer)
@@ -67,7 +71,6 @@ class Jeu:
             rect = self.zone.create_rectangle(k*CASE, 0, (k+1)*CASE, CASE, fill="gray")
             self.parts.append(rect)
         if n == 2:
-            print('2')
             self.bouton2.destroy()
         elif n == 3:
             self.bouton3.destroy()
@@ -75,6 +78,7 @@ class Jeu:
             self.bouton4.destroy()
         elif n == 5:
             self.bouton5.destroy()
+
     def dessiner(self):
         
         if not self.parts:
@@ -142,7 +146,7 @@ class Jeu:
         self.pos = [i, j]
         self.dessiner()
 
-    def _chevauchement(self, grille, i, j, orient, longueur):
+    def chevauchement(self, grille, i, j, orient, longueur):
        # retourne True si chevauchement ou hors grille
        for k in range(longueur):
            ii = i + k if orient == "H" else i
@@ -176,7 +180,7 @@ class Jeu:
                    grille_locale[jj][ii] = 1
 
        # vérifier chevauchement / bordure
-       if self._chevauchement(grille_locale, i, j, orient, longueur):
+       if self.chevauchement(grille_locale, i, j, orient, longueur):
            Label(self.fen, text="Chevauchement ou hors grille !", bg="red", fg="white").place(x=450, y=350)
            return
 
@@ -209,7 +213,11 @@ class Jeu:
        self.longueur = 0
        self.orient = "H"
        self.pos = [0, 0]
-
+       nombre_bateaux_restants = 4 - len(self.bateaux_valides)
+       if nombre_bateaux_restants == 0:
+           self.notif_bateaux_valides()
+           
+           
 if __name__ == "__main__":
     root = Tk()
     Jeu(root)
