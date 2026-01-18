@@ -1,51 +1,60 @@
 
-from tkinter import *
-from placement_bateaux_sur_grille import CASE, TAILLE_GRILLE
-import random
+from tkinter import Button, Canvas, Label, Tk
 
-class gestion_tir:
+from placement_bateaux_sur_grille import CASE, TAILLE_GRILLE
+
+
+class GestionTir:
     def __init__(self, plateau_adversaire, tir_effectue):
         self.plateau_adversaire = plateau_adversaire
         self.plateau_adversaire.title("Bataille navale - plateau de l'adversaire")
         self.plateau_adversaire.geometry("900x500")
-        
-        self.longueur = 0               
+
+        self.longueur = 0
         self.pos_tir = [0, 0]
         self.tir = None
-        self.joueur = "humain" #premier joueur
         self.tir_effectue = tir_effectue
         self.grille_occupee = None
-         
-    def bouger_tir(self):   # raccourcis clavier pour deplacer le tir
+
+    def bouger_tir(self):  # raccourcis clavier pour deplacer le tir
         self.plateau_adversaire.bind("<Up>", self.deplacer)
         self.plateau_adversaire.bind("<Down>", self.deplacer)
         self.plateau_adversaire.bind("<Left>", self.deplacer)
         self.plateau_adversaire.bind("<Right>", self.deplacer)
         self.plateau_adversaire.bind("<Return>", self.tir_effectue)
-        # bouton pour tirer sur une case de l'adversaire
-        Button(self.plateau_adversaire, text="Attaquer", command=lambda:self.creation_tir()).place(x=1230, y=400)
+        Button(
+            self.plateau_adversaire,
+            text="Attaquer",
+            command=lambda: self.creation_tir(),
+        ).place(x=1230, y=400)
 
-    def plateau(self,plateau_adversaire):
-    #dessin du plateau de jeu 
-        self.zone = Canvas(plateau_adversaire, width=CASE*TAILLE_GRILLE, height=CASE*TAILLE_GRILLE, bg="lightblue")
+    def plateau(self, plateau_adversaire):
+        # dessin du plateau de jeu
+        self.zone = Canvas(
+            plateau_adversaire,
+            width=CASE * TAILLE_GRILLE,
+            height=CASE * TAILLE_GRILLE,
+            bg="lightblue",
+        )
         self.zone.place(x=800, y=400)
-    # grille ou l'on met les bateaux 
+        # grille ou l'on met les bateaux
         for x in range(TAILLE_GRILLE):
             for y in range(TAILLE_GRILLE):
-                self.zone.create_rectangle(x*CASE, y*CASE, (x+1)*CASE, (y+1)*CASE, outline="black")
-    # petite aide
-        Label(plateau_adversaire, text="Flèches = déplacer viseur , enter = tirer ").place(x=800, y=350)
-    #nom plateau
+                self.zone.create_rectangle(
+                    x * CASE, y * CASE, (x + 1) * CASE, (y + 1) * CASE, outline="black"
+                )
+        # petite aide
+        Label(
+            plateau_adversaire, text="Flèches = déplacer viseur , enter = tirer "
+        ).place(x=800, y=350)
+        # nom plateau
         Label(plateau_adversaire, text="Plateau ennemi").place(x=950, y=820)
 
-    def creation_tir(self):                
-            #dessiner la case du tir
-            self.tir = self.zone.create_rectangle(0, 0, CASE, CASE, fill="yellow")
-            #self.pos_tir = [x1/CASE, y1/CASE]
-    
-       
+    def creation_tir(self):
+        # dessiner la case du tir
+        self.tir = self.zone.create_rectangle(0, 0, CASE, CASE, fill="yellow")
+
     def deplacer(self, event):
-        print(f"deplacer")#à supprimer
         if not self.tir:
             return
         i, j = self.pos_tir
@@ -65,7 +74,7 @@ class gestion_tir:
 
         self.pos_tir = [i, j]
         self.dessiner()
-    
+
     def dessiner(self):
         if not self.tir:
             return
@@ -76,23 +85,3 @@ class gestion_tir:
         y2 = y1 + CASE
         self.zone.coords(self.tir, x1, y1, x2, y2)
 
-    #changement de joueur
-    def tour_suivant(self,event=None):
-        if self.joueur == "humain":                
-            return self.tour(1)
-        else:
-            return self.tour(2)
-        
-
-    def tour(self,a):#action du joueur
-        if a == 1:
-            self.joueur = "bot"
-            self.creation_tir()
-        elif a == 2:
-            self.joueur = "humain"
-
-
-if __name__ == "__main__":
-    root = Tk()
-    gestion_tir(root)
-    root.mainloop()
