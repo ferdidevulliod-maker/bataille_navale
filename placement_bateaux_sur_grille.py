@@ -160,7 +160,9 @@ class Jeu:
     def validez_placement(self):
        # vérifie qu'il y a un bateau en cours
        if not self.parts or self.longueur == 0:
-           Label(self.fen, text="Aucun bateau à valider.", bg="orange").place(x=450, y=280)
+           text = Label(self.fen, text="Aucun bateau à valider.", bg="orange")
+           text.place(x=450, y=280)
+           text.after(1000, text.destroy)
            return
 
        i, j = self.pos
