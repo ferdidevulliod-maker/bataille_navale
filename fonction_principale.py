@@ -64,9 +64,11 @@ def action_bot(terrain_joueur, terrain_adversaire):
     
     # Vérifier le résultat du tir
     echec_dernier_tir_bot, coord_dernier_tir_bot = verifier(terrain_joueur, terrain_adversaire)
-    
-    return echec_dernier_tir_bot, coord_dernier_tir_bot
+    action_bot(terrain_joueur, terrain_adversaire)
+    verifier_victoire()
 
+    return echec_dernier_tir_bot, coord_dernier_tir_bot
+    
 def verifier(terrain_joueur, terrain_adversaire, event=None):
     """
     Vérifie les résultats des tirs du joueur et du bot sur leurs terrains respectifs.
