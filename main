@@ -1,0 +1,185 @@
+import random
+from tkinter import *
+import os
+import csv
+
+from fonction_principale import action_bot
+from placement_tir import gestion_tir
+from placement_bateaux_sur_grille import CASE, TAILLE_GRILLE, Jeu
+
+# CSV
+SCORES_FILE = "scores.csv"
+score_joueur = 0
+score_bot = 0
+
+def charger_score():
+    """Charge les scores depuis le fichier CSV."""
+    global score_joueur, score_bot
+    if not os.path.exists(SCORES_FILE):
+        with open(SCORES_FILE, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["joueur", "bot"])
+            writer.writerow([0, 0])
+        score_joueur, score_bot = 0, 0
+    else:
+        with open(SCORES_FILE, "r") as f:
+            reader = csv.reader(f)
+            next(reader)
+            score_joueur, score_bot = map(int, next(reader))
+
+def sauvegarder_score():
+    """Sauvegarde les scores actuels dans le CSV."""
+    global score_joueur, score_bot
+    with open(SCORES_FILE, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["joueur", "bot"])
+        writer.writerow([score_joueur, score_bot])
+
+# Variables globales
+historique_tirs_joueur = set()
+historique_tirs_bot = set()
+partie_terminee = False
+
+#  Fenêtre Tkinter
+accueil = Tk()
+accueil.title("Bataille Navale")
+accueil.geometry("1600x1143")
+
+# Fond
+canvas = Canvas(accueil, width=1600, height=1143)
+canvas.place(x=0, y=0)
+fond = PhotoImage(file="fond.png")
+canvas.create_image(650, 0, anchor="n", image=fond)
+
+# Titre
+Label(accueil, text="Bataille Navale", bg="lightblue", font=("Arial", 50)).place(
+    x=430, y=200, width=600, height=100
+)
+
+
+def placement_bateau_bot():
+    """Place les bateaux du bot aléatoirement sur la grille."""
+    grille_occupee = [[0]*TAILLE_GRILLE for _ in range(TAILLE_GRILLE)]
+    taille_bateau = [2,3,4,5]
+
+    for longueur in taille_bateau:
+        placer = False
+        while not placer:
+            sens = random.randint(1,2)
+            if sens == 1:  # Horizontal
+                orientation = "H"
+                y = random.randint(0, TAILLE_GRILLE-1)
+                x = random.randint(0, TAILLE_GRILLE-longueur)
+            else:  # Vertical
+                orientation = "V"
+                x = random.randint(0, TAILLE_GRILLE-1)
+                y = random.randint(0, TAILLE_GRILLE-longueur)
+
+            if not terrain_joueur.chevauchement(grille_occupee, x, y, orientation, longueur):
+                for k in range(longueur):
+                    i = x + k if orientation=="H" else x
+                    j = y if orientation=="H" else y + k
+                    grille_occupee[j][i] = 1
+                    terrain_adversaire.zone.create_rectangle(
+                        i*CASE, j*CASE, (i+1)*CASE, (j+1)*CASE, state="hidden"
+                    )
+                placer = True
+    return grille_occupee
+
+def verifier_victoire():
+    """Vérifie si le joueur ou le bot a perdu tous ses bateaux."""
+    global partie_terminee, score_joueur, score_bot
+    if partie_terminee:
+        return False
+
+    # Vérifier si joueur perdu
+    joueur_perdu = all((elem[0]+k if elem[2]=="H" else elem[0],
+                        elem[1] if elem[2]=="H" else elem[1]+k) in historique_tirs_bot
+                       for elem in terrain_joueur.positions for k in range(elem[3]))
+    # Vérifier si bot perdu
+    bot_perdu = all(terrain_adversaire.grille_occupee[y][x]==0 or (x,y) in historique_tirs_joueur
+                    for y in range(TAILLE_GRILLE) for x in range(TAILLE_GRILLE))
+
+    if joueur_perdu or bot_perdu:
+        partie_terminee = True
+        afficher_fin(not joueur_perdu)
+        return True
+    return False
+
+def afficher_fin(victoire):
+    """Affiche un message de fin de partie et met à jour les scores."""
+    global score_joueur, score_bot
+    frame_fin = Frame(accueil, bg="lightgrey", bd=3, relief="ridge")
+    frame_fin.place(anchor="center", x=800, y=570)
+
+    if victoire:
+        message = "VICTOIRE !"
+        couleur = "green"
+        score_joueur += 1
+    else:
+        message = "LE BOT EST PLUS FORT"
+        couleur = "red"
+        score_bot += 1
+
+    Label(frame_fin, text=message, bg=couleur, fg="white", font=("Arial", 30),
+          padx=20, pady=10).pack(pady=(10,5))
+
+    Button(frame_fin, text="Recommencer", font=("Arial", 15), bg="lightblue",
+           command=lambda:[frame_fin.destroy(), recommencer_partie()]).pack(pady=(5,10))
+    Button(frame_fin, text="Quitter", font=("Arial", 15), bg="orange",
+           command=accueil.quit).pack(pady=(5,15))
+
+    # Mettre à jour le label de score
+    label_score.config(text=f"Score Joueur : {score_joueur} | Bot : {score_bot}")
+    sauvegarder_score()
+
+def recommencer_partie():
+    """Réinitialise la partie pour rejouer."""
+    global partie_terminee, historique_tirs_joueur, historique_tirs_bot
+    partie_terminee = False
+    historique_tirs_joueur.clear()
+    historique_tirs_bot.clear()
+    terrain_joueur.zone.destroy()
+    terrain_adversaire.zone.destroy()
+    terrain_joueur.plateau(accueil)
+    terrain_adversaire.plateau(accueil)
+    terrain_adversaire.grille_occupee = placement_bateau_bot()
+
+def tir_effectue(event=None):
+    """Effectue un tir du joueur et le tour du bot."""
+    global historique_tirs_joueur, partie_terminee
+    if partie_terminee:
+        return
+    x,y = terrain_adversaire.pos_tir
+    historique_tirs_joueur.add((x,y))
+    action_bot(terrain_joueur, terrain_adversaire)
+    verifier_victoire()
+
+def commencer():
+    """Démarre la partie."""
+    bouton1.destroy()
+    terrain_joueur.plateau(accueil)
+    terrain_adversaire.plateau(accueil)
+    terrain_adversaire.grille_occupee = placement_bateau_bot()
+
+def notif_bateaux_valides():
+    terrain_adversaire.bouger_tir()
+
+# Création des terrains
+terrain_adversaire = gestion_tir(accueil, tir_effectue)
+terrain_joueur = Jeu(accueil, notif_bateaux_valides)
+
+# Charger les scores 
+charger_score()
+
+# Label de score
+label_score = Label(accueil, text=f"Score Joueur : {score_joueur} | Bot : {score_bot}",
+                    font=("Arial",18), bg="lightyellow")
+label_score.place(x=500, y=320)
+
+# Boutons
+bouton1 = Button(accueil, text="Commencer", command=commencer)
+bouton1.place(x=650, y=450)
+Button(accueil, text="Quitter", command=accueil.quit).place(x=665, y=100)
+
+accueil.mainloop()
