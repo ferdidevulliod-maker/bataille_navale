@@ -1,6 +1,8 @@
 import random
 from placement_bateaux_sur_grille import *
 from placement_tir import *
+from import os 
+from import csv
 
 # garder l'historique des tirs effectués du bot
 historique_tirs = set()
@@ -11,6 +13,42 @@ succes_tirs_en_cours = []
 # statuts du dernier tir du bot
 coord_dernier_tir_bot = None
 echec_dernier_tir_bot = True
+
+
+def charger_score():
+"""
+Ces fonctions lisent et écrivent le score du joueur et du bot dans un fichier scores.csv.
+Si le fichier n’existe pas, il est créé automatiquement.
+Le score est conservé même après avoir fermé le jeu.
+
+"""
+    if not os.path.exists("scores.csv"):#si le fichier existe pas on en creer un
+        with open("scores.csv", "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(["joueur", "bot"])
+            writer.writerow([0, 0])
+        return 0, 0
+
+    with open("scores.csv", "r") as f:
+        reader = csv.reader(f)
+        next(reader)  # sauter l'en-tête
+        joueur, bot = next(reader)
+        return int(joueur), int(bot)
+
+def sauvegarder_score(joueur, bot):
+    with open("scores.csv", "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["joueur", "bot"])
+        writer.writerow([joueur, bot])
+
+
+label_score = Label(
+    accueil,
+    text=f"Score  Joueur : {score_joueur}  |  Bot : {score_bot}",
+    font=("Arial", 18),
+    bg="lightyellow"
+)
+label_score.place(x=500, y=320)320)
 
 def action_bot(terrain_joueur, terrain_adversaire):
     """
