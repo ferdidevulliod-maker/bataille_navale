@@ -1,0 +1,2 @@
+def maFonction():
+  print("Hello")
